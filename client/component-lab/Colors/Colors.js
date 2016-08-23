@@ -1,6 +1,6 @@
 import React from 'react'
 
-import classes from './Colors.css'
+import classes from './Colors.stylus'
 
 console.log({classes})
 

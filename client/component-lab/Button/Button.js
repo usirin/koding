@@ -1,9 +1,11 @@
 import React, { PropTypes } from 'react'
 import classNames from 'classnames'
 
-import classes from './Button.styl'
+import classes from './Button.stylus'
 
-const Button = ({ type, size, disabled, auto, children }) => {
+const noop = () => {}
+
+const Button = ({ type, size, disabled, auto, children, onClick = noop }) => {
   type = type === 'primary' ? 'primary-1' : type
 
   const className = classNames(
@@ -13,7 +15,7 @@ const Button = ({ type, size, disabled, auto, children }) => {
   )
 
   return (
-    <button className={className}>{children}</button>
+    <button className={className} onClick={onClick}>{children}</button>
   )
 }
 

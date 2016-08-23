@@ -1,25 +1,26 @@
 require('coffee-script/register')
-var path = require('path')
+var _ = require('lodash')
+var ProgressBarPlugin = require('progress-bar-webpack-plugin')
+var WebpackNotifierPlugin = require('webpack-notifier')
+
 var clientConfig = require('../webpack.config')
+var customConfig = _.pick(clientConfig, [
+  'module',
+  'resolve',
+  'stylus'
+])
 
-var CLIENT_PATH = path.resolve(__dirname, '..')
+customConfig = _.assign({}, customConfig, {
+  plugins: [
+    new ProgressBarPlugin({ format: ' client: [:bar] :percent ', width: 1024 }),
+    new WebpackNotifierPlugin({ title: 'Component lab' })
+  ]
+})
 
-console.log('conf', clientConfig)
+console.log({
+  c: customConfig.resolve
+})
 
-var isStyleLoader = function(loaderConfig) {
-  if (!Array.isArray(loaderConfig.loaders)) return false
+module.exports = customConfig
 
-  return loaderConfig.loaders.reduce(function(res, loader) {
-    console.log('loader', loader)
-    return res || /css/.test(loader)
-  }, false)
-}
-
-module.exports = {
-  module: {
-    loaders: clientConfig.module.loaders.filter(isStyleLoader)
-  }
-}
-
-console.log(module.exports.module.loaders)
 

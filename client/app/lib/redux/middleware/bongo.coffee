@@ -17,3 +17,20 @@ generateTypes = (type) -> [
   "#{type}_SUCCESS"
   "#{type}_FAIL"
 ]
+
+
+dispatch
+  bongo: (remote) -> remote.api.JStackTemplate.one { id }
+
+
+bongoReducer = (state = {}, action) ->
+  switch action.type
+    when BONGO_SUCCESS
+      {result} = action
+      state[result.constructorName] or= {}
+      state[result.constructorName][result._id] = result
+
+      return state
+
+
+bongoSelector = (state) ->
