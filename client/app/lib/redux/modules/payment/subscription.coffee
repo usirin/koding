@@ -1,4 +1,5 @@
 immutable = require 'app/util/immutable'
+{ createSelector } = require 'reselect'
 customer = require './customer'
 
 { makeNamespace, expandActionType,
@@ -19,7 +20,7 @@ reducer = (state = null, action) ->
 
     when LOAD.SUCCESS, CREATE.SUCCESS
       normalized = normalize action.result, schema
-      return normalized.first 'subscription'
+      return immutable normalized.first 'subscription'
 
     when customer.LOAD.SUCCESS, customer.CREATE.SUCCESS, customer.UPDATE.SUCCESS
       normalized = normalize action.result, customer.schema
@@ -56,12 +57,30 @@ remove = ->
   }
 
 
+##
+# Selectors
+##
+
+plan = (state) -> state.subscription.plan
+
+isTrial = (state) -> state.subscription.status is 'trialing'
+
+endsAt = (state) -> state.subscription.current_period_end
+
+pricePerSeat = (state) -> state.subscription.plan.amount / 100
+
+trialDays = (state) -> plan(state).trial_period_days
+
+
 module.exports = _.assign reducer, {
   namespace: withNamespace()
   schema
   reducer
   load, create, remove
   LOAD, CREATE, REMOVE
+
+  # Selectors
+  plan, isTrial, endsAt, pricePerSeat
 }
 
 

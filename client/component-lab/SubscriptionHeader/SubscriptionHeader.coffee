@@ -13,9 +13,10 @@ textStyles = require 'lab/Text/Text.stylus'
 module.exports = class SubscriptionHeader extends Component
 
   render: ->
-    { title, teamSize, isTrial, endsAt } = @props
-    isDanger = no
+    { title, teamSize, isTrial, endsAt
+      nextBillingAmount, freeCredit } = @props
 
+    isDanger = no
     if isTrial
       daysLeft = Math.max 0, dateDiffInDays(new Date(Number endsAt), new Date)
       subtitle = "You have #{daysLeft} days left in your trial."
@@ -47,7 +48,7 @@ module.exports = class SubscriptionHeader extends Component
       {unless @props.isTrial
         <Col xs={4} className={textStyles.right}>
           <Label size="small" type="info">
-            Next Bill Amount: <strong>${@props.nextBillingAmount}</strong>
+            Next Bill Amount: <strong>${nextBillingAmount}</strong>
           </Label>
         </Col>
       }
@@ -58,11 +59,12 @@ SubscriptionHeader.propTypes =
   title: PropTypes.string
   freeCredit: PropTypes.number
   nextBillingAmount: PropTypes.number
-  endsAt: PropTypes.string.isRequired
+  endsAt: PropTypes.string
 
 SubscriptionHeader.defaultProps =
   title: 'Koding subscription title'
   freeCredit: 0
   nextBillingAmount: 0
   isTrial: no
+  endsAt: String Date.now()
 

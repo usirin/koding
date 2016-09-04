@@ -1,3 +1,4 @@
+globals = require 'globals'
 
 module.exports = stripeMiddleware = (service, publishableKey) -> (store) -> (next) -> (action) ->
 

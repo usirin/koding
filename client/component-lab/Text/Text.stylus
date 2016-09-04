@@ -38,11 +38,17 @@ $fw-bolder = 900
 .info
   color                     $additional-6
 
+.secondary
+  color                     $additional-3-faded
+
 .right
   text-align                right
 .center
   text-align                center
 .left
   text-align                left
+
+.monospaced
+  font-family               SourceCodePro
 
 

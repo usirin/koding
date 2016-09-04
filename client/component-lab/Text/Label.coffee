@@ -4,11 +4,12 @@ generateClassName = require 'classnames'
 
 textStyles = require './Text.stylus'
 
-Label = ({ size, type, children }) ->
+Label = ({ size, type, children, monospaced }) ->
   className = generateClassName [
     textStyles['Label']
     textStyles[size]
     type and textStyles[type]
+    monospaced and textStyles.monospaced
   ]
 
   return (
