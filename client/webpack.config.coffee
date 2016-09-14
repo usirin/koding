@@ -13,14 +13,16 @@ WebpackNotifierPlugin = require 'webpack-notifier'
 { rev: version } = require './.config.json'
 
 CLIENT_PATH        = __dirname
-BUILD_PATH         = path.join CLIENT_PATH, '../website/a/p/p', version
+SOURCE_PATH        = path.join CLIENT_PATH, 'src'
 WEBSITE_PATH       = path.join CLIENT_PATH, '..', 'website'
-THIRD_PARTY_PATH   = path.join CLIENT_PATH, './thirdparty'
-ASSETS_PATH        = path.join CLIENT_PATH, './assets'
-COMMON_STYLES_PATH = path.join CLIENT_PATH, 'app/styl/**/*.styl'
+BUILD_PATH         = path.join WEBSITE_PATH, 'a/p/p', version
+THIRD_PARTY_PATH   = path.join CLIENT_PATH, 'thirdparty'
+ASSETS_PATH        = path.join CLIENT_PATH, 'assets'
+COMMON_STYLES_PATH = path.join SOURCE_PATH, 'app/styl/commons/*.styl'
 PUBNUB_PATH        = path.join THIRD_PARTY_PATH, 'pubnub.min.js'
 IMAGES_PATH        = path.join WEBSITE_PATH, 'a', 'images'
-COMPONENT_LAB_PATH = path.join CLIENT_PATH, 'component-lab'
+COMPONENT_LAB_PATH = path.join SOURCE_PATH, 'component-lab'
+MOCKS_PATH         = path.join CLIENT_PATH, 'mocks'
 
 # we are gonna set NODE_ENV to either `production` or `development` to figure
 # out the compile target.
@@ -28,18 +30,15 @@ __DEV__  = process.env.NODE_ENV is 'development'
 __PROD__ = process.env.NODE_ENV is 'production'
 __TEST__ = process.env.NODE_ENV is 'test'
 
-# let's use current manifest files to identify app folders eventually we want
-# to get rid of `bant.json` files, and figure out another way to identify what
-# apps we are serving.
-manifests = glob.sync('*/bant.json',
-  cwd: CLIENT_PATH
+manifests = glob.sync('*/manifest.json',
+  cwd: SOURCE_PATH
   realpath: yes
 ).map(require)
 
 webpackConfig =
-  context: CLIENT_PATH
+  context: SOURCE_PATH
   entry: [
-    './app/lib/index.coffee'
+    './app/index.coffee'
   ]
   output:
     path: BUILD_PATH
@@ -58,16 +57,16 @@ webpackConfig =
 #    require '../../../home/lib/routehandler'
 # We can just write
 #    require 'home/routehandler'
-appAliases = manifests.reduce (res, manifest) ->
-  res[manifest.name] = path.join CLIENT_PATH, manifest.name, 'lib'
-  return res
-, {}
+# appAliases = manifests.reduce (res, manifest) ->
+#   res[manifest.name] = path.join SOURCE_PATH, manifest.name
+#   return res
+# , {}
 
 # module resolvers
 webpackConfig.resolve =
-  root: CLIENT_PATH,
+  root: SOURCE_PATH,
   extensions: ['', '.coffee', '.js', '.json', '.styl']
-  alias: _.assign {}, appAliases,
+  alias: # _.assign {}, appAliases,
     kd: 'kd.js'
     pubnub: PUBNUB_PATH
     assets: ASSETS_PATH
@@ -105,7 +104,7 @@ thirdPartyLoaders = pushLoader [
 
 # special loader for globals
 pushLoader [
-  test: require.resolve './globals.coffee'
+  test: require.resolve './src/globals.coffee'
   loaders: [
     path.join CLIENT_PATH, "./webpack/web_loaders/globals-loader.js?clientPath=#{CLIENT_PATH}"
     'coffee'
@@ -120,24 +119,27 @@ pushLoader [
   exclude: [/node_modules/].concat thirdPartyLoaders.map (loader) -> loader.test
 ,
   test: /\.coffee$/
-  include: CLIENT_PATH
+  include: [
+    SOURCE_PATH
+    MOCKS_PATH
+    /kd-react/
+  ]
   exclude: [
-    path.join CLIENT_PATH, 'src'
     # globals has its own loader
-    require.resolve './globals.coffee'
+    require.resolve './src/globals.coffee'
   ]
   loaders: ['pistachio', 'coffee', 'cjsx']
 ,
   test: /\.json$/
   loader: 'json'
-  include: CLIENT_PATH
+  include: SOURCE_PATH
 ]
 
 
 # Style loaders configuration
 pushLoader [
   test: /\.stylus$/
-  include: CLIENT_PATH
+  include: SOURCE_PATH
   loaders: [
     'style'
     'css?modules&importLoaders=1&localIdentName=[name]__[local]___[hash:base64:5]'
@@ -145,7 +147,7 @@ pushLoader [
   ]
 ,
   test: /\.styl$/
-  include: CLIENT_PATH
+  include: SOURCE_PATH
   loaders: [
     'style'
     'css'
@@ -153,7 +155,10 @@ pushLoader [
   ]
 ,
   test: /\.css$/
-  include: CLIENT_PATH
+  include: [
+    SOURCE_PATH
+    /kd\.js/
+  ]
   exclude: /flexboxgrid/,
   loaders: [
     'style'
@@ -221,7 +226,7 @@ else if __PROD__
 webpackConfig.stylus =
   use: [require('nib')()]
   import: [ '~nib/lib/nib/index.styl', COMMON_STYLES_PATH ]
-  define: { assetsPath: '/assets', rootPath: CLIENT_PATH }
+  define: { assetsPath: '/assets', rootPath: SOURCE_PATH }
 
 
 module.exports = webpackConfig

@@ -1,0 +1,6 @@
+require 'app/test'
+require 'ide/test'
+require 'app/providers/test'
+require 'home/virtualmachines/test/'
+require 'home/myteam/test/'
+require 'home/utilities/test/'

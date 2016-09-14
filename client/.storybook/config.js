@@ -6,7 +6,7 @@ require('app/styl/require-styles')
 addDecorator(centered)
 
 
-const req = require.context('../component-lab', true, /\.story\.(js|coffee)$/)
+const req = require.context('../src/component-lab', true, /\.story\.(js|coffee)$/)
 
 const loadStories = () => req.keys().forEach(req)
 

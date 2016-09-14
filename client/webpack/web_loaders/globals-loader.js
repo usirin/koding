@@ -26,7 +26,7 @@ module.exports = function(globals) {
     ' `make bongo_schema` in `client` folder?'
   )
 
-  var manifests = glob.sync('*/bant.json', {
+  var manifests = glob.sync('src/*/manifest.json', {
     cwd: clientPath,
     realpath: true
   })
@@ -40,7 +40,7 @@ function throwUnless(condition, message) {
 
 function enhanceGlobals(globals, manifests, configFile, schemaFile) {
 
-  // we are using bant.json files to identify which folders are app.
+  // we are using manifest.json files to identify which folders are app.
   var modules = manifests.map(function (_path) {
     var manifest = require(_path)
 
