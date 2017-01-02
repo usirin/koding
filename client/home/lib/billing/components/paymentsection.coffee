@@ -1,5 +1,6 @@
 kd = require 'kd'
 React = require 'react'
+{ findDOMNode } = require 'react-dom'
 { Grid, Row, Col } = require 'react-flexbox-grid'
 
 { Footer } = DashboardSection = require 'lab/DashboardSection'
@@ -49,7 +50,9 @@ module.exports = class PaymentSection extends React.Component
 
 
   onToggleForm: ->
-    @setState { formVisible: not @state.formVisible }
+    @setState { formVisible: not @state.formVisible }, =>
+      if @state.formVisible
+        (findDOMNode @_form).scrollIntoView?()
 
 
   render: ->
@@ -96,6 +99,9 @@ module.exports = class PaymentSection extends React.Component
             month={placeholders.exp_month}
             formVisible={formVisible}
             onToggleForm={=> @onToggleForm()} />}
+
+        {hasCard and formVisible and
+          <hr className='divider' /> }
 
         {(not hasCard or formVisible) and
           <CreateCreditCardForm loading={loading} ref={(f) => @_form = f} />}
