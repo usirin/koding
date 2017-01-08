@@ -2,6 +2,14 @@ KONFIG    = require 'koding-config-manager'
 apiErrors = require './apierrors'
 { clone } = require 'underscore'
 
+publicMethods =
+  JAccount: [
+    'one'
+  ]
+  JStackTemplate: [
+    'some'
+  ]
+
 purify = (data) ->
 
   if data?.get? then data.get() else data
@@ -59,7 +67,7 @@ getToken = (req) ->
   return token
 
 
-parseRequest = (req, res) ->
+parseRequest = (req, res, koding) ->
 
   { model, id } = req.params
 
@@ -72,6 +80,15 @@ parseRequest = (req, res) ->
   unless method
     sendApiError res, apiErrors.invalidInput
     return
+
+  unless constructorName = getConstructorName model, koding.models
+    sendApiError res, apiErrors.invalidInput
+    return
+
+  if method in (publicMethods[model] ? [])
+    return makeBongoRequest req, res, {
+      koding, id, constructorName, method, args: parseArgs req.body
+    }
 
   unless sessionToken = getToken req
     sendApiError res, apiErrors.unauthorizedRequest
@@ -121,13 +138,68 @@ sendSignatureErr = (signatures, method, res) ->
   }
 
 
+parseArgs = (body) ->
+  body = if body then clone body else null
+
+  args = switch
+    when Array.isArray(body) then body
+    when Object.keys(body).length then [body]
+    else []
+
+  return args.concat [->]
+
+validateBongoOptions = (res, options = {}) ->
+
+  { constructorName, Models, type, method, args } = options
+
+  unless Models[constructorName].getSignature type, method
+    sendApiError res, { ok: false, error: 'No such method' }
+    return false
+
+  [validCall, signatures] = Models[constructorName].testSignature type, method, args
+
+  unless validCall
+    sendSignatureErr signatures, "#{constructorName}.#{method}", res
+    return false
+
+  return true
+
+makeBongoRequest = (req, res, options) ->
+
+  { koding, id, args, callbacks, constructorName, method } = options
+
+  type = if id then 'instance' else 'static'
+
+  return  unless validateBongoOptions res, {
+    Models: koding.models, constructorName, type, method, args
+  }
+
+  bongoRequest = {
+    arguments: args
+    callbacks: { 1: [args.length - 1] }
+    method: {
+      constructorName, method, type
+    }
+  }
+
+  bongoRequest.method.id = id  if id
+  req.body.queue = [ bongoRequest ]
+
+  (koding.expressify {
+    rateLimitOptions: KONFIG.nodejsRateLimiterForApi
+    processPayload
+  }) req, res
+
 module.exports = RemoteHandler = (koding) ->
 
   Models = koding.models
 
   return (req, res) ->
 
-    return  unless parsedRequest = parseRequest req, res
+    res.header 'Access-Control-Allow-Origin', 'http://54.169.209.221:3000'
+    res.header 'Access-Control-Allow-Credentials', yes
+
+    return  unless parsedRequest = parseRequest req, res, koding
 
     { model, id, method, sessionToken } = parsedRequest
 
@@ -137,52 +209,11 @@ module.exports = RemoteHandler = (koding) ->
         sendApiError res, err
         return
 
-      constructorName = getConstructorName model, Models
+      args = parseArgs req.body
+      req.body = context
 
-      unless constructorName
-        sendApiError res, apiErrors.invalidInput
-        return
+      constructorName = getConstructorName model, koding.models
 
-      body = if req.body then clone req.body else null
-      req.body ?= {}
-      req.body  = context
-
-      args = if Array.isArray body
-      then body
-      else if (Object.keys body).length
-      then [body]
-      else []
-
-      args.push (->)
-
-      callbacks = { 1: [args.length - 1] }
-
-      type = if id then 'instance' else 'static'
-
-      unless Models[constructorName].getSignature type, method
-        sendApiError res, { ok: false, error: 'No such method' }
-        return
-
-      [validCall, signatures] = Models[constructorName].testSignature type, method, args
-
-      unless validCall
-        sendSignatureErr signatures, "#{constructorName}.#{method}", res
-        return
-
-      bongoRequest = {
-        arguments: args
-        callbacks
-        method: {
-          constructorName
-          method
-          type
-        }
+      makeBongoRequest req, res, {
+        koding, id, args, method, constructorName
       }
-
-      bongoRequest.method.id = id  if id
-      req.body.queue = [ bongoRequest ]
-
-      (koding.expressify {
-        rateLimitOptions: KONFIG.nodejsRateLimiterForApi
-        processPayload
-      }) req, res

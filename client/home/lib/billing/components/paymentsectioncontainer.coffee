@@ -37,7 +37,6 @@ formMessages[Status.PAST_DUE] = formMessages[Status.CANCELED] =
     file. Please enter a new card to continue using Koding.
   '
 
-
 formMessages[Status.NEEDS_UPGRADE] =
   type: 'danger'
   title: 'Your account is suspended.'

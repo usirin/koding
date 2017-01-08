@@ -1,16 +1,15 @@
 Bongo                                   = require 'bongo'
-koding                                  = require './../bongo'
+koding                                  = require '../../bongo'
 { uniq }                                = require 'underscore'
 async                                   = require 'async'
 
 {
-  getClientId
   handleClientIdNotFound
   setSessionCookie
-} = require './../helpers'
+} = require '../../helpers'
 
 module.exports = (req, res, next) ->
-  
+
   res.header 'Access-Control-Allow-Origin', 'http://54.169.209.221:3000'
   res.header 'Access-Control-Allow-Credentials', yes
 
@@ -30,7 +29,6 @@ module.exports = (req, res, next) ->
 
   alreadyMember = alreadyMember is 'true'
   context       = { group: slug }
-  clientId      = getClientId req, res
 
   # subscribe to koding marketing mailings or not
   body.emailFrequency         or= {}
@@ -41,10 +39,9 @@ module.exports = (req, res, next) ->
   # required for JUser.login
   body.groupName                = slug
 
-  return handleClientIdNotFound res, req  unless clientId
-
   client          = {}
   clientIPAddress = req.headers['x-forwarded-for'] or req.connection.remoteAddress
+  clientId = undefined
 
   queue = [
 

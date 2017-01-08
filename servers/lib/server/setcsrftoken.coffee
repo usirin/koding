@@ -4,7 +4,9 @@ KONFIG = require 'koding-config-manager'
 module.exports = setCrsfToken = (req, res, next) ->
 
   unless KONFIG.environment is 'production'
-    res.header 'Access-Control-Allow-Origin', 'http://dev.koding.com:4000'
+    #res.header 'Access-Control-Allow-Origin', 'http://dev.koding.com:4000'
+    res.header 'Access-Control-Allow-Origin', 'http://54.169.209.221:3000'
+    res.header 'Access-Control-Allow-Credentials', yes
 
   next()  if req?.cookies?._csrf
 

@@ -7,6 +7,9 @@ koding                     = require './../bongo'
 
 module.exports = (req, res) ->
 
+  res.header 'Access-Control-Allow-Origin', 'http://54.169.209.221:3000'
+  res.header 'Access-Control-Allow-Credentials', yes
+
   { JUser } = koding.models
   { username, password, tfcode, redirect, groupName, token } = req.body
 
@@ -25,4 +28,6 @@ module.exports = (req, res) ->
 
     setSessionCookie res, info.replacementToken
 
-    res.status(200).end()
+    res
+      .json { clientId: info.replacementToken }
+      .end()
