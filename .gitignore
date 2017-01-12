@@ -19,6 +19,7 @@ nginx.pid
 .imagesrc
 .agignore
 .nvmrc
+yarn.lock
 /.build
 /vault
 /generated
